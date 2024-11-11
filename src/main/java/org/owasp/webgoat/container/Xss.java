@@ -1,30 +1,46 @@
 package org.owasp.webgoat.container;
-
 import javax.servlet.http.*;
 import java.io.*;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 public class XSSExample extends HttpServlet {
+
+    @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // Obtener el parámetro 'name' de la solicitud
         String name = request.getParameter("name");
 
         // Sanitizar y escapar el parámetro 'name' para prevenir XSS
         if (name != null) {
-            // Se puede procesar el dato, pero no reflejarlo directamente en el HTML
-            // Alternativamente, se puede guardar en sesión, base de datos, etc.
+            // Usar la función de escape de Apache Commons Lang para escapar caracteres peligrosos
+            name = StringEscapeUtils.escapeHtml4(name);
         }
 
-        // Responder sin reflejar el nombre directamente en el HTML
-        response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-        out.println("<html>");
-        out.println("<head><title>XSS Mitigation Example</title></head>");
-        out.println("<body>");
-        
-        // No se refleja directamente el parámetro 'name' en el HTML
-        out.println("<h1>Hello, the parameter was received securely, but not reflected in the page.</h1>");
+        // Intentar obtener el PrintWriter y manejar la excepción IOException
+        try {
+            // Obtener el PrintWriter para enviar la respuesta
+            PrintWriter out = response.getWriter();
 
-        out.println("</body>");
-        out.println("</html>");
+            // Configurar la respuesta HTTP
+            response.setContentType("text/html");
+
+            // Escribir la respuesta de manera segura
+            out.println("<html>");
+            out.println("<head><title>XSS Mitigation Example</title></head>");
+            out.println("<body>");
+            out.println("<h1>Hello, " + name + "!</h1>"); // Mostramos el nombre de manera segura
+            out.println("</body>");
+            out.println("</html>");
+
+        } catch (IOException e) {
+            // Manejar la excepción si ocurre un error al obtener el PrintWriter
+            e.printStackTrace();
+            // Enviar una respuesta de error al cliente
+            try {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error processing the response");
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 }
