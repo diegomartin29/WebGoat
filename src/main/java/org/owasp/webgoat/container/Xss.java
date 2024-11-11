@@ -1,3 +1,6 @@
+package org.owasp.webgoat.container;
+
+
 import javax.servlet.http.*;
 import java.io.*;
 
