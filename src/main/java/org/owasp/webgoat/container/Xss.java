@@ -2,7 +2,6 @@ package org.owasp.webgoat.container;
 
 import javax.servlet.http.*;
 import java.io.*;
-import org.apache.commons.lang3.StringEscapeUtils;
 
 public class XSSExample extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -11,19 +10,21 @@ public class XSSExample extends HttpServlet {
 
         // Sanitizar y escapar el parámetro 'name' para prevenir XSS
         if (name != null) {
-            // Usar la función de escape de Apache Commons Lang para escapar caracteres peligrosos
-            name = StringEscapeUtils.escapeHtml4(name);
+            // Se puede procesar el dato, pero no reflejarlo directamente en el HTML
+            // Alternativamente, se puede guardar en sesión, base de datos, etc.
         }
 
-        // Responder con el contenido de forma segura (sin ejecutar JavaScript)
+        // Responder sin reflejar el nombre directamente en el HTML
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
         out.println("<html>");
         out.println("<head><title>XSS Mitigation Example</title></head>");
         out.println("<body>");
-        out.println("<h1>Hello, " + name + "!</h1>"); // Ahora el parámetro 'name' está escapado
+        
+        // No se refleja directamente el parámetro 'name' en el HTML
+        out.println("<h1>Hello, the parameter was received securely, but not reflected in the page.</h1>");
+
         out.println("</body>");
         out.println("</html>");
     }
 }
-
