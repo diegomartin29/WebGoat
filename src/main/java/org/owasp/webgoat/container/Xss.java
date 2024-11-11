@@ -24,11 +24,12 @@ public class XSSExample extends HttpServlet {
             // Configurar la respuesta HTTP
             response.setContentType("text/html");
 
-            // Escribir la respuesta de manera segura
+            // Escribir la respuesta sin reflejar directamente los datos del usuario
             out.println("<html>");
             out.println("<head><title>XSS Mitigation Example</title></head>");
             out.println("<body>");
-            out.println("<h1>Hello, " + name + "!</h1>"); // Mostramos el nombre de manera segura
+            out.println("<h1>Hello, user!</h1>"); // Mensaje fijo, no refleja los datos del usuario directamente
+            out.println("<p>Your input has been safely processed.</p>"); // Mensaje seguro que no refleja datos del usuario
             out.println("</body>");
             out.println("</html>");
 
