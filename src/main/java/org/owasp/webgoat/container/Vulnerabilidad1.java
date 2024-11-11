@@ -1,4 +1,3 @@
-package org.owasp.webgoat.lessons.challenges.challenge5;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,21 +34,21 @@ public class Assignment5 extends AssignmentEndpoint {
     @PostMapping("/challenge/5")
     @ResponseBody
     public AttackResult login(
-            @RequestParam String username_login,
-            @RequestParam String password_login) throws Exception {
+            @RequestParam String usernamelogin,
+            @RequestParam String passwordlogin) throws Exception {
 
-        if (!StringUtils.hasText(username_login) || !StringUtils.hasText(password_login)) {
+        if (!StringUtils.hasText(username_login) || !StringUtils.hasText(passwordlogin)) {
             return failed(this).feedback("required4").build();
         }
         if (!"Larry".equals(username_login)) {
-            return failed(this).feedback("user.not.larry").feedbackArgs(username_login).build();
+            return failed(this).feedback("user.not.larry").feedbackArgs(usernamelogin).build();
         }
 
         // Consulta parametrizada para evitar SQL Injection
         String query = "SELECT password FROM challenge_users WHERE userid = ? AND password = ?";
         try (PreparedStatement statement = dataSource.getConnection().prepareStatement(query)) {
-            statement.setString(1, username_login);
-            statement.setString(2, password_login);
+            statement.setString(1, usernamelogin);
+            statement.setString(2, passwordlogin);
 
             ResultSet resultSet = statement.executeQuery();
 
