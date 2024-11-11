@@ -50,7 +50,7 @@ public class HammerHead {
      * Entry point for WebGoat, redirects to the first lesson found within the course.
      * Protege el método contra ataques CSRF.
      */
-    @RequestMapping(path = "/attack", method = RequestMethod.POST)
+    @PostMapping(path = "/attack", method = RequestMethod.POST)
     public ModelAndView attack() {
         // Verifica y maneja el token CSRF (opcional si usas Spring Security)
         CsrfToken csrfToken = (CsrfToken) SecurityContextHolder.getContext().getAuthentication().getDetails();
