@@ -44,13 +44,23 @@ import org.springframework.web.servlet.ModelAndView;
 @AllArgsConstructor
 public class HammerHead {
 
-  private final Course course;
+    private final Course course;
 
-  /** Entry point for WebGoat, redirects to the first lesson found within the course. */
-  @RequestMapping(
-      path = "/attack",
-      method = {RequestMethod.GET, RequestMethod.POST})
-  public ModelAndView attack() {
-    return new ModelAndView("redirect:" + "start.mvc" + course.getFirstLesson().getLink());
-  }
+    /** 
+     * Entry point for WebGoat, redirects to the first lesson found within the course.
+     * Protege el método contra ataques CSRF.
+     */
+    @RequestMapping(path = "/attack", method = RequestMethod.POST)
+    public ModelAndView attack() {
+        // Verifica y maneja el token CSRF (opcional si usas Spring Security)
+        CsrfToken csrfToken = (CsrfToken) SecurityContextHolder.getContext().getAuthentication().getDetails();
+        
+        if (csrfToken != null && csrfToken.getToken() != null) {
+            // Proceder si el token CSRF es válido
+            return new ModelAndView("redirect:" + "start.mvc" + course.getFirstLesson().getLink());
+        } else {
+            // Manejo en caso de CSRF inválido
+            return new ModelAndView("errorPage"); // Redirige a una página de error si no es válido
+        }
+    }
 }
