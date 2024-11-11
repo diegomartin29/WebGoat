@@ -1,3 +1,5 @@
+package org.owasp.webgoat.container;
+
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
