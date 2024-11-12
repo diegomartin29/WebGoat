@@ -3,8 +3,11 @@ package org.owasp.webgoat.container;
 import java.io.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import java.nio.file.*;
 
 public class SecureIDORServlet extends HttpServlet {
+
+    private static final String UPLOAD_DIRECTORY = "/var/www/uploads/";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -16,7 +19,16 @@ public class SecureIDORServlet extends HttpServlet {
             sendErrorResponse(response, "ID de archivo no proporcionado.");
             return;
         }
-        
+
+        // Sanitiza el 'fileId' para evitar problemas de seguridad como el traversal de directorios
+        fileId = sanitizeFileId(fileId);
+
+        // Verifica si el 'fileId' es válido (solo puede contener caracteres seguros como letras, números y guiones bajos)
+        if (!fileId.matches("[a-zA-Z0-9_-]+")) {
+            sendErrorResponse(response, "ID de archivo no válido.");
+            return;
+        }
+
         // Supongamos que el usuario tiene un "usuarioId" y que cada archivo tiene un "propietarioId"
         String usuarioId = (String) request.getSession().getAttribute("usuarioId");
 
@@ -25,9 +37,8 @@ public class SecureIDORServlet extends HttpServlet {
             sendErrorResponse(response, "Usuario no autenticado.");
             return;
         }
-        
+
         // Aquí deberíamos comprobar si el usuario tiene acceso al archivo 'fileId'
-        // Esta es una validación ficticia, en la práctica deberías consultar la base de datos para obtener el propietario del archivo
         String fileOwner = getFileOwnerFromDatabase(fileId);
 
         if (fileOwner == null || !fileOwner.equals(usuarioId)) {
@@ -36,9 +47,16 @@ public class SecureIDORServlet extends HttpServlet {
         }
 
         // Se crea la ruta completa al archivo
-        File file = new File("/var/www/uploads/" + fileId);
+        Path filePath = Paths.get(UPLOAD_DIRECTORY + fileId).normalize();
+
+        // Verifica que el archivo esté dentro del directorio permitido y no esté fuera de la raíz
+        if (!filePath.startsWith(UPLOAD_DIRECTORY)) {
+            sendErrorResponse(response, "Acceso denegado: intento de acceso fuera del directorio permitido.");
+            return;
+        }
 
         // Verifica si el archivo existe y es un archivo regular
+        File file = filePath.toFile();
         if (file.exists() && file.isFile()) {
             try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
                 String line;
@@ -65,13 +83,19 @@ public class SecureIDORServlet extends HttpServlet {
         return null;  // Archivo no existe en la base de datos
     }
 
+    // Método para sanitizar el fileId y evitar traversal de directorios
+    private String sanitizeFileId(String fileId) {
+        // Eliminamos caracteres peligrosos y normalizamos la ruta
+        return fileId.replaceAll("[^a-zA-Z0-9_-]", "");
+    }
+
     // Método para enviar una respuesta con un mensaje de error
     private void sendErrorResponse(HttpServletResponse response, String message) {
         try {
             response.setContentType("text/plain");
             response.getWriter().println(message);
         } catch (IOException e) {
-            e.printStackTrace(); // Si no se puede escribir la respuesta, registrar el error
+            log("Error al escribir la respuesta de error: " + e.getMessage(), e);
         }
     }
 
@@ -80,7 +104,7 @@ public class SecureIDORServlet extends HttpServlet {
         try {
             response.getWriter().println(content);
         } catch (IOException e) {
-            e.printStackTrace(); // Si no se puede escribir la respuesta, registrar el error
+            log("Error al escribir la respuesta de contenido: " + e.getMessage(), e);
         }
     }
 }
