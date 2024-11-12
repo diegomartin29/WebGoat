@@ -13,7 +13,11 @@ public class SecureCommandServlet extends HttpServlet {
         
         // Validación estricta de la entrada: solo permitir comandos específicos
         if (userInput == null || !isValidCommand(userInput)) {
-            response.getWriter().println("Comando no válido.");
+            try {
+                response.getWriter().println("Comando no válido.");
+            } catch (IOException e) {
+                handleIOException(response, e);
+            }
             return;
         }
 
@@ -28,12 +32,24 @@ public class SecureCommandServlet extends HttpServlet {
                 for (File file : dir.listFiles()) {
                     fileList.append(file.getName()).append("<br>");
                 }
-                response.getWriter().println(fileList.toString());
+                try {
+                    response.getWriter().println(fileList.toString());
+                } catch (IOException e) {
+                    handleIOException(response, e);
+                }
             } else {
-                response.getWriter().println("Comando desconocido.");
+                try {
+                    response.getWriter().println("Comando desconocido.");
+                } catch (IOException e) {
+                    handleIOException(response, e);
+                }
             }
         } catch (Exception e) {
-            response.getWriter().println("Error al ejecutar la acción.");
+            try {
+                response.getWriter().println("Error al ejecutar la acción.");
+            } catch (IOException ioe) {
+                handleIOException(response, ioe);
+            }
         }
     }
     
@@ -41,6 +57,16 @@ public class SecureCommandServlet extends HttpServlet {
     private boolean isValidCommand(String input) {
         // Permitimos solo un conjunto de comandos específicos que no son peligrosos
         return "listFiles".equals(input); // Ejemplo de comando permitido
+    }
+
+    // Método para manejar la excepción IOException y enviar una respuesta adecuada
+    private void handleIOException(HttpServletResponse response, IOException e) {
+        try {
+            response.getWriter().println("Error al escribir en la respuesta.");
+        } catch (IOException ioe) {
+            // Si no se puede escribir en la respuesta, no podemos hacer mucho más
+            ioe.printStackTrace();  // Registrar el error internamente
+        }
     }
 }
 
