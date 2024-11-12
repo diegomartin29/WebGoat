@@ -3,13 +3,12 @@ import java.io.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import java.nio.file.*;
-import java.nio.file.attribute.*;
 import java.util.*;
 import java.util.regex.*;
 
 public class SecureFileListingServlet extends HttpServlet {
 
-    // Directorio para listar archivos (por ejemplo, en un directorio seguro)
+    // Directorio base seguro para listar archivos
     private static final String SAFE_DIRECTORY = "/var/www/uploads/";
 
     @Override
@@ -20,6 +19,7 @@ public class SecureFileListingServlet extends HttpServlet {
         // Validación de entrada: Asegurarse de que la entrada solo sea un nombre de directorio seguro
         if (userInput == null || !isValidDirectoryName(userInput)) {
             response.getWriter().println("Entrada no válida. Solo se permiten caracteres alfanuméricos, guiones y barras.");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
@@ -29,12 +29,14 @@ public class SecureFileListingServlet extends HttpServlet {
         // Validar que la ruta esté dentro del directorio seguro y que no se haya hecho un path traversal
         if (!directoryPath.startsWith(SAFE_DIRECTORY)) {
             response.getWriter().println("Acceso denegado. Ruta no permitida.");
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
-        // Verificar si el directorio existe
+        // Verificar si el directorio existe y es un directorio
         if (!Files.exists(directoryPath) || !Files.isDirectory(directoryPath)) {
             response.getWriter().println("El directorio no existe o no es válido.");
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
 
@@ -52,6 +54,7 @@ public class SecureFileListingServlet extends HttpServlet {
             }
         } catch (IOException e) {
             response.getWriter().println("Error al leer el directorio.");
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -60,6 +63,20 @@ public class SecureFileListingServlet extends HttpServlet {
         // Expresión regular para solo permitir caracteres alfanuméricos, guiones, y barras
         Pattern pattern = Pattern.compile("^[a-zA-Z0-9_/]+$");
         return pattern.matcher(input).matches();
+    }
+
+    // Método para evitar posibles riesgos de exposición de rutas sensibles
+    private void preventSensitiveInfoExposure(HttpServletResponse response) {
+        // Evitar la exposición de cualquier información sensible mediante encabezados
+        response.setHeader("X-Powered-By", ""); // Eliminar el encabezado X-Powered-By
+        response.setHeader("Server", ""); // Eliminar el encabezado Server
+    }
+
+    // Sobrescribir el método de inicialización para añadir protección adicional
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        // Aquí podríamos añadir medidas de seguridad adicionales, como configuración de seguridad
     }
 }
 
