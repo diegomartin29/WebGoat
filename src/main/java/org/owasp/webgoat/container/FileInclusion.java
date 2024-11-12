@@ -16,13 +16,13 @@ public class SecureFileInclusionServlet extends HttpServlet {
 
         // Valida que el nombre del archivo no sea nulo ni vacío
         if (fileName == null || fileName.isEmpty()) {
-            response.getWriter().println("Parámetro 'file' no proporcionado.");
+            sendErrorResponse(response, "Parámetro 'file' no proporcionado.");
             return;
         }
         
         // Valida que el archivo no contenga caracteres peligrosos como '..' (subida de directorios)
         if (!isValidFileName(fileName)) {
-            response.getWriter().println("Ruta de archivo no válida.");
+            sendErrorResponse(response, "Ruta de archivo no válida.");
             return;
         }
 
@@ -31,14 +31,14 @@ public class SecureFileInclusionServlet extends HttpServlet {
 
         // Verifica que el archivo está dentro del directorio seguro (sin subir a directorios fuera de /uploads)
         if (!filePath.startsWith(BASE_DIRECTORY)) {
-            response.getWriter().println("Acceso denegado: intento de acceso a archivos fuera del directorio permitido.");
+            sendErrorResponse(response, "Acceso denegado: intento de acceso a archivos fuera del directorio permitido.");
             return;
         }
 
         // Verifica si el archivo existe y es un archivo regular
         File file = filePath.toFile();
         if (!file.exists() || !file.isFile()) {
-            response.getWriter().println("Archivo no encontrado o no es un archivo válido.");
+            sendErrorResponse(response, "Archivo no encontrado o no es un archivo válido.");
             return;
         }
 
@@ -47,10 +47,10 @@ public class SecureFileInclusionServlet extends HttpServlet {
             response.setContentType("text/plain"); // Asegura que la respuesta sea texto plano
             String line;
             while ((line = reader.readLine()) != null) {
-                response.getWriter().println(line);
+                sendResponse(response, line);  // Envía el contenido de cada línea
             }
         } catch (IOException e) {
-            response.getWriter().println("Error al leer el archivo.");
+            sendErrorResponse(response, "Error al leer el archivo.");
         }
     }
 
@@ -59,7 +59,25 @@ public class SecureFileInclusionServlet extends HttpServlet {
         // Solo permite letras, números, guion bajo y guion medio (sin caracteres peligrosos)
         return fileName.matches("^[a-zA-Z0-9_-]+$");
     }
-}
 
+    // Método para enviar una respuesta con un mensaje de error
+    private void sendErrorResponse(HttpServletResponse response, String message) {
+        try {
+            response.setContentType("text/plain");
+            response.getWriter().println(message);
+        } catch (IOException e) {
+            e.printStackTrace(); // Si no se puede escribir la respuesta, registrar el error
+        }
+    }
+
+    // Método para enviar una respuesta con el contenido del archivo
+    private void sendResponse(HttpServletResponse response, String content) {
+        try {
+            response.getWriter().println(content);
+        } catch (IOException e) {
+            e.printStackTrace(); // Si no se puede escribir la respuesta, registrar el error
+        }
+    }
+}
 
 
