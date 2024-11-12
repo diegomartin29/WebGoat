@@ -1,33 +1,28 @@
 package org.owasp.webgoat.container;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Scanner;
+import java.io.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
 
-public class InsecureCommandInjectionExample {
-
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Introduce el nombre del archivo para listar: ");
-        String filename = scanner.nextLine();  // Entrada sin validar
-
-        // Vulnerable: Concatenación directa de la entrada del usuario en el comando
-        String command = "ls " + filename;
-
+public class CommandInjectionServlet extends HttpServlet {
+    
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Obtiene el parámetro 'command' de la solicitud
+        String userInput = request.getParameter("command");
+        
+        // Ejecuta el comando recibido del usuario
         try {
-            // Ejecuta el comando con la entrada del usuario directamente
-            Process process = Runtime.getRuntime().exec(command);
+            // Aquí está la vulnerabilidad: ejecutar un comando del sistema operativo sin validación
+            Process process = Runtime.getRuntime().exec(userInput);
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
-                System.out.println(line);
+                response.getWriter().println(line);
             }
-            reader.close();
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            scanner.close();
+            response.getWriter().println("Error al ejecutar el comando.");
         }
     }
 }
+
 
